@@ -1,3 +1,4 @@
+
 # September 10, 2025
 # from fastapi import FastAPI
 
@@ -18,6 +19,7 @@ from torchvision import transforms
 import torch
 from app.helper_lib.model import get_model
 import numpy as np
+from torchvision.utils import save_image
 
 app = FastAPI()
 
@@ -29,6 +31,7 @@ It tells the story of Edmond Dantès, who is falsely imprisoned and later seeks 
 "we are generating text based on bigram probabilities",
 "bigram models are simple but effective"
 ]
+'''
 bigram_model = BigramModel(corpus)
 nlp = spacy.load("en_core_web_lg")
 
@@ -51,7 +54,10 @@ def generate_text(request: TextGenerationRequest):
 def embeddings(request: EmbeddingRequest):
     emb_word = nlp(request.word)
     return emb_word.vector.tolist()
+'''
 
+
+#CNN Model
 transform = transforms.Compose([transforms.Resize((64, 64)), transforms.ToTensor()])
 model = get_model("Homework2")
 device = torch.device('mps') if torch.backends.mps.is_available() else torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -60,6 +66,15 @@ state_dict = torch.load(
             map_location=device,
         )
 model.load_state_dict(state_dict['model_state_dict'], strict=True)
+
+#GAN Model
+generator,_ = get_model("GAN")
+gan_state_dict = torch.load(
+            "C:/Users/nikki/sps_genai_v2/app/checkpoints_gan/epoch_001.pth",  
+            map_location=device,
+        )
+generator.load_state_dict(gan_state_dict['model_state_dict'], strict=True)
+
 
 CLASSES = np.array(
     [
@@ -84,6 +99,15 @@ async def predict_image(file: UploadFile = File(...)):
         _, predicted = torch.max(outputs, 1)
         label = CLASSES[predicted.item()]
     return {"prediction": label}
+
+
+@app.post("/GAN")
+async def generate_image():
+    with torch.no_grad():
+        noise = torch.randn(1, 100).to(device)
+        fake = generator(noise).detach() #Tensor
+        save_image(fake, 'C:/Users/nikki/sps_genai_v2/app/data/GeneratedImages/image2.png')
+    return {"status": "Ok"}
 
 #Push to Git
 #git status - check which files were updated

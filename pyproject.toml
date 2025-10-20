@@ -18,6 +18,7 @@ dependencies = [
     "scipy>=1.16.2",
     "spacy>=3.8.7",
     "torch>=2.8.0",
+    "torchinfo>=1.8.0",
     "torchvision>=0.23.0",
     "union>=0.1.194",
 ]
@@ -25,4 +26,6 @@ dependencies = [
 [tool.uv.workspace]
 members = [
     "sps_genai",
+    "sps_genai_v2",
+    "app/sps_genai_v2",
 ]

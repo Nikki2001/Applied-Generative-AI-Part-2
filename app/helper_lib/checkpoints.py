@@ -1,32 +1,38 @@
 import torch
 import os
 
-def save_checkpoint(model, optimizer, epoch, loss, accuracy, checkpoint_dir='checkpoints'):
-    """
-    Save model checkpoint
+#Update checkpoints_cnn name based on the project running
+def save_checkpoint(model, optimizer, epoch, loss, accuracy='NA', checkpoint_dir='checkpoints_cnn'):
+    """Save model checkpoint"""
+    os.makedirs(checkpoint_dir, exist_ok=True)
 
-    TODO: Implement checkpoint saving that includes:
-    1. Model state dict
-    2. Optimizer state dict  
-    3. Epoch number
-    4. Loss and accuracy metrics
-    5. Create checkpoint directory if needed
+    checkpoint = {
+        'epoch': epoch,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'loss': loss,
+        'accuracy': accuracy
+    }
 
-    Hint: Reference the FCNN notebook checkpoint implementation
-    """
-    # TODO: Implement checkpoint saving
-    pass
+    # Save latest checkpoint #Update file name to be FCNN/CNN/CAN/etc. based on the run
+   #f'epoch_
+    checkpoint_path = os.path.join(checkpoint_dir, f'epoch_{epoch:03d}.pth')
+    torch.save(checkpoint, checkpoint_path)
+
+    return checkpoint_path
 
 def load_checkpoint(model, optimizer, checkpoint_path, device):
-    """
-    Load model checkpoint and restore training state
+    """Load model checkpoint"""
+    checkpoint = torch.load(checkpoint_path, map_location=device)
 
-    TODO: Implement checkpoint loading that:
-    1. Loads the checkpoint file
-    2. Restores model and optimizer states
-    3. Returns epoch, loss, and accuracy information
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
-    Why save optimizer state? See FCNN notebook documentation!
-    """
-    # TODO: Implement checkpoint loading  
-    pass
+    epoch = checkpoint['epoch']
+    loss = checkpoint['loss']
+    accuracy = checkpoint['accuracy']
+
+    print(f"Loaded checkpoint from epoch {epoch}")
+    print(f"Loss: {loss:.4f}, Accuracy: {accuracy:.2f}%")
+
+    return epoch, loss, accuracy

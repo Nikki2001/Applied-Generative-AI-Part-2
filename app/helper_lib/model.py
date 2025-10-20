@@ -18,8 +18,69 @@ class SimpleCNN(nn.Module):
         x = self.fc2(x)                          # 10 classes
         return x
 
+class Critic(nn.Module):
+        def __init__(self):        
+            super(Critic, self).__init__()
+            self.conv1 = nn.Conv2d(1, 64, kernel_size=4, stride=2, padding=1, bias=False)
+            self.act1 = nn.LeakyReLU(0.2, inplace=True)
+
+            self.conv2 = nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1, bias=False)
+            self.batchnorm = nn.BatchNorm2d(128)
+            self.act2 = nn.LeakyReLU(0.2, inplace=True)
+            #self.drop2 = nn.Dropout(0.3)
+
+            self.flatten = nn.Flatten()
+            self.fc = nn.Linear(7 * 7 * 128, 1)
+
+
+        def forward(self, x):
+            x = self.conv1(x)
+            x = self.act1(x)
+
+            x = self.conv2(x)
+            x = self.batchnorm(x)
+            x = self.act2(x)
+            #x = self.drop2(x)
+            x = self.flatten(x)
+            x = self.fc(x)
+            return x
+
+class Generator(nn.Module):
+        def __init__(self, z_dim):
+            super(Generator, self).__init__()
+            self.z_dim = z_dim
+
+            self.fc = nn.Linear(z_dim, 7 * 7 * 128)
+            self.reshape = lambda x: x.view(x.size(0), 128, 7, 7)
+
+            self.deconv1 = nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1, bias=False)
+            self.bn1 = nn.BatchNorm2d(64, momentum=0.9)
+            self.act1 = nn.ReLU(True) # nn.LeakyReLU(0.2, inplace=True)
+
+            self.deconv2 = nn.ConvTranspose2d(64, 1, kernel_size=4, stride=2, padding=1, bias=False)
+            self.tanh = nn.Tanh()
+
+        def forward(self, x):
+            x = self.fc(x)
+            x = self.reshape(x)
+
+            x = self.deconv1(x)
+            x = self.bn1(x)
+            x = self.act1(x)
+
+            x = self.deconv2(x)
+            x = self.tanh(x)
+            return x
+
+
 def get_model(model_name):
     if model_name == "Homework2":
         return SimpleCNN()
+    
+    if model_name == "GAN":
+         z_dim = 100
+         gen = Generator(z_dim)
+         critic = Critic()
+         return gen,critic
 
 
