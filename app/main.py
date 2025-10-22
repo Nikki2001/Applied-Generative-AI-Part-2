@@ -106,7 +106,7 @@ async def generate_image():
     with torch.no_grad():
         noise = torch.randn(1, 100).to(device)
         fake = generator(noise).detach() #Tensor
-        save_image(fake, 'C:/Users/nikki/sps_genai_v2/app/data/GeneratedImages/image2.png')
+        save_image(fake, 'C:/Users/nikki/sps_genai_v2/app/data/GeneratedImages/image3.png')
     return {"status": "Ok"}
 
 #Push to Git

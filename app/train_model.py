@@ -26,4 +26,4 @@ transform = transforms.Compose([
 
 dataloader = get_data_loader('./data', batch_size=32, train=True, download= True, transform=transform, dataset="MNIST")
 generator,critic = get_model('GAN')
-train_gan(generator, critic, dataloader, device, epochs=2) #CHANGE EVENTUALLY TO 10
+train_gan(generator, critic, dataloader, device, epochs=10) 
