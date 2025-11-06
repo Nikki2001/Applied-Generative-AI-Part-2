@@ -1,0 +1,48 @@
+'''
+import torch
+
+# Create a tensor with requires_grad=True
+x = torch.tensor([2.0],requires_grad=False)
+
+# Define a simple function y = x² + 3x
+y = x**2 + 3 * x
+
+# Backpropagate
+y.backward()
+# Print the gradient
+print("x.grad =", x.grad)
+'''
+
+'''
+
+import torch
+
+# Create a tensor with requires_grad=True
+x = torch.tensor([2.0], requires_grad=True)
+w = torch.tensor([1.0, 3.0])
+# Define a simple function y = x² + 3x
+2
+y = w[0] * x**2 + w[1] * x
+# Backpropagate
+y.backward()
+# Print the gradient
+print("x.grad =", x.grad)
+print("w.grad =", w.grad)
+'''
+
+'''
+import torch
+x = torch.tensor([2.0], requires_grad=True)
+w = torch.tensor([1.0, 3.0], requires_grad=True) 
+y = w[0] * x**2 + w[1] * x
+y.backward()
+print("x.grad =", x.grad) 
+print("w.grad =", w.grad)   
+'''
+
+import torch
+x = torch.tensor([1.0], requires_grad=True)
+y = x * 3
+z = y.detach()
+w = z * 2
+w.backward() # This will raise an error
