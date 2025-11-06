@@ -120,12 +120,17 @@ async def generate_image():
 def generate_samples(nn_energy_model, inp_imgs, steps, step_size, noise_std):
     nn_energy_model.eval()
 
+    for w in nn_energy_model.parameters():
+         w.requires_grad = False
+    inp_imgs = inp_imgs.detach().requires_grad_(True)
+
     for step in range(steps):
         # We add noise to the input images, but we will
         # need to calculate the gradients with the transformed
         # noisy images, so tell pytorch not to track the gradient 
         # yet, this way we can avoid unnecessary computations that
         # pytorch does in order to calculate the gradients later:
+        
         with torch.no_grad():
             noise = torch.randn_like(inp_imgs) * noise_std
             inp_imgs = (inp_imgs + noise).clamp(-1.0, 1.0)
@@ -160,14 +165,11 @@ energy_state_dict = torch.load(
         )
 nn_energy_model.load_state_dict(energy_state_dict['model_state_dict'], strict=True)
 
-
 @app.post("/Energy")
 async def generate_image():
-    with torch.no_grad():
-        x = torch.rand((8, 1, 32, 32), device=device) * 2 - 1  # Uniform in [-1, 1]
-        new_imgs = generate_samples(nn_energy_model, x, steps=256, step_size=10.0, noise_std=0.01)
-        save_image(new_imgs, 'app/data/GeneratedImages/Energy1.png')
-        
+    x = torch.rand((8, 3, 32, 32), device=device) * 2 - 1  # Uniform in [-1, 1]
+    new_imgs = generate_samples(nn_energy_model, x, steps=256, step_size=10.0, noise_std=0.01)
+    save_image(new_imgs, 'app/data/GeneratedImages/Energy1.png') 
     return {"status": "Ok"}
 
 
