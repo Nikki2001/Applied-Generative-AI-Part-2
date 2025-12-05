@@ -20,6 +20,8 @@ import torch
 from app.helper_lib.model import get_model
 import numpy as np
 from torchvision.utils import save_image
+from transformers import AutoModelForCausalLM
+from transformers import AutoTokenizer
 
 app = FastAPI()
 
@@ -193,6 +195,70 @@ async def generate_image():
         save_image(image, 'C:/Users/nikki/sps_genai_v2/app/data/GeneratedImages/Diffusion1.png')
     return {"status": "Ok"}
 
+
+model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2").to(device)
+gpt2_state_dict = torch.load(
+            "app/gpt2_checkpoints/gpt2.pth",  
+            map_location=device,
+        )
+model.load_state_dict(gpt2_state_dict['model_state_dict'], strict=True)
+tokenizer = AutoTokenizer.from_pretrained('./app/gpt2data')
+SEQ_LEN = 30
+class TextGenerator:
+    def __init__(self, model, top_k=10):
+        self.model = model
+        self.model.to(device)
+
+    def sample_from(self, probs, temperature):
+        probs[1] = 0  # Mask out UNK token (index 1) to prevent generating <UNK>
+        probs = torch.nn.functional.softmax(probs/temperature, dim=-1)
+        next_id = torch.multinomial(probs, num_samples=1).item()
+        return next_id, probs
+
+    def generate(self, question, context, max_tokens, temperature):
+        self.model.eval()
+        prompt = f"Question: {question}\nContext: {context}\nAnswer:"
+        generated_tokens = tokenizer(
+            prompt,
+            truncation=True,
+            max_length=SEQ_LEN,
+            padding = False,
+            return_tensors=None
+        ).input_ids
+
+        info = []
+
+        with torch.no_grad():
+            while len(generated_tokens) < max_tokens:
+                x = torch.tensor([generated_tokens], dtype=torch.long)
+                x = x.to(device)
+                logits = self.model(x).logits
+                last_logits = logits[0, -1] # .cpu().numpy()
+                sample_token, probs = self.sample_from(last_logits, temperature)
+                generated_tokens.append(sample_token)
+                info.append({
+                    "prompt": question,
+                    "word_probs": probs,
+                })
+                if sample_token == 0:
+                    break
+        print("GEN", generated_tokens)
+        generated_words = tokenizer.decode(generated_tokens)
+        print("generated text:" + " ".join(generated_words))
+        return generated_words
+
+
+text_generator = TextGenerator(model)
+
+class TextGenerationRequest(BaseModel):
+    question: str
+    context: str
+    length: int
+
+@app.post("/generate_with_llm")
+def generate_with_llm(request: TextGenerationRequest):
+    generated_text = text_generator.generate(request.question, request.context, max_tokens=30, temperature=3.0)
+    return {"generated_text": generated_text}
 
 #Push to Git
 #git status - check which files were updated
